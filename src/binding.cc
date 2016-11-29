@@ -96,6 +96,8 @@ int _processArchive (
     result = 0;
   }
 
+  RARCloseArchive(handler);
+
   return result;
 }
 
