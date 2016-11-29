@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "tsc": "node_modules/.bin/tsc -p tsconfig.json"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,10 @@
   "dependencies": {
     "bindings": "^1.2.1",
     "nan": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/es6-promise": "0.0.32",
+    "@types/node": "0.0.1",
+    "typescript": "^2.0.10"
   }
 }

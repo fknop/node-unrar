@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "removeComments": false,
+        "noImplicitAny": true,
+        "suppressImplicitAnyIndexErrors": false,
+        "declaration": true,
+        "types": [
+          "node",
+          "es6-promise"
+        ]
+    },
+    "files": [
+        "lib/index.ts"
+    ]
+}

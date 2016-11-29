@@ -38,3 +38,8 @@ jspm_packages
 
 *.cbr
 *.rar
+
+
+lib/*.js
+lib/*.map
+lib/*.d.ts
