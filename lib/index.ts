@@ -1,11 +1,7 @@
-'use strict'
-
-// this is a test file
 import * as Path from 'path';
 import * as Fs from 'fs';
 
 const unrar = require('bindings')('node-unrar');
-
 
 export enum OpenMode {
   LIST = 0,
