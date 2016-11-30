@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "install": "node-gyp rebuild",
     "build": "node-gyp build",
-    "tsc": "node_modules/.bin/tsc -p tsconfig.json",
+    "tsc": "tsc -p tsconfig.json",
     "prepublish": "npm run tsc"
   },
   "keywords": [],
@@ -22,5 +22,16 @@
     "@types/es6-promise": "0.0.32",
     "@types/node": "0.0.1",
     "typescript": "^2.0.10"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fknop/node-unrar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fknop/node-unrar/issues"
+  },
+  "homepage": "https://github.com/fknop/node-unrar#readme"
 }
