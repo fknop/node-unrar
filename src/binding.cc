@@ -5,6 +5,7 @@
 #include <vector>
 #include <nan.h>
 
+
 #ifdef _DEBUG 
 #define _D(msg) do {\
   std::cout << __FILE__ << ":" << __LINE__ << ">> " << msg << std::endl;\
@@ -107,6 +108,50 @@ int _processArchive (
   return result;
 }
 
+static v8::Local<v8::Object> buildResponse (const std::string& name, const std::vector<std::string>& filenames) {
+
+  Nan::EscapableHandleScope scope;
+
+  // Returned object
+  v8::Local<v8::Object> value = Nan::New<v8::Object>();
+
+  // Sets the archive name as "name".
+  SetProperty(
+    value,
+    "name",
+    NewV8String(name.c_str())
+  );
+
+  // Assign the files 
+  v8::Local<v8::Array> files = Nan::New<v8::Array>();
+
+  for (int i = 0; i < filenames.size(); ++i) {
+    Nan::Set(files, i, NewV8String(filenames[i].c_str()));
+  }
+
+  // Assign the file to the returned object with the "files" key
+  SetProperty(
+    value,
+    "files",
+    files
+  );
+
+  return scope.Escape(value);
+}
+
+static v8::Local<v8::Value> buildError (int ret) {
+
+  Nan::EscapableHandleScope scope;
+
+  char * message = "Error processing archive";
+
+  if (ret == ERAR_EOPEN) {
+    message = "Error opening archive";
+  }
+
+  return scope.Escape(Nan::Error(message));
+}
+
 class RarWorker: public Nan::AsyncWorker {
   public:
     RarWorker(Nan::Callback * callback, int mode, int op, const char * filepath, const char * toDir, const char * password)
@@ -146,34 +191,11 @@ class RarWorker: public Nan::AsyncWorker {
       // If the processing was successful
       if (ret == 0) {
 
-        // Returned object
-        v8::Local<v8::Object> returnValue = Nan::New<v8::Object>();
-
-        // Sets the archive name as "name".
-        SetProperty(
-          returnValue,
-          "name",
-          NewV8String(archiveName.c_str())
-        );
-
-        // Assign the files 
-        v8::Local<v8::Array> files = Nan::New<v8::Array>();
-
-        for (int i = 0; i < filenames.size(); ++i) {
-          Nan::Set(files, i, NewV8String(filenames[i].c_str()));
-        }
-
-        // Assign the file to the returned object with the "files" key
-        SetProperty(
-          returnValue,
-          "files",
-          files
-        );
-
         // The arguments to be send back to javascript
+        auto response = buildResponse(archiveName, filenames);
         v8::Local<v8::Value> argv[] = {
           Nan::Null(),
-          returnValue
+          response
         };
 
         // Call the callback with the arguments
@@ -182,15 +204,8 @@ class RarWorker: public Nan::AsyncWorker {
       else {
 
         // Handling unsuccesful processing
-
-        char * message = "Error processing archive";
-
-        if (ret == ERAR_EOPEN) {
-          message = "Error opening archive";
-        }
-
         v8::Local<v8::Value> argv[] = {
-          Nan::Error(message),
+          buildError(ret),
           Nan::New<v8::Number>(ret)
         };
 
@@ -238,11 +253,12 @@ class RarWorker: public Nan::AsyncWorker {
     std::string password;
 };
 
-// NOOP method that will do nothing if no callback is provided
-NAN_METHOD(NOOP) {
-  info.GetReturnValue().SetUndefined();
+static bool IsString (const v8::Local<v8::Value>& value) {
+  return value->IsString();
 }
 
+// Main function
+// path is checked on javascript side, so there is no need to check if it exists
 NAN_METHOD(processArchive) {
 
   if (info.Length() < 1) {
@@ -256,6 +272,12 @@ NAN_METHOD(processArchive) {
 
   v8::Local<v8::Object> options = info[0]->ToObject();
   v8::Local<v8::Value> filepathValue = GetProperty(options, "path");
+
+  if (!filepathValue->IsString()) { 
+    Nan::ThrowTypeError("path must be a string"); 
+    return; 
+  }
+
   Nan::Utf8String filepath(filepathValue);
 
   strncpy(file, (const char *) *filepath, 1024);
@@ -283,10 +305,6 @@ NAN_METHOD(processArchive) {
   }
 
 
-  if (!filepathValue->IsString()) {
-    Nan::ThrowTypeError("path must be a string");
-    return;
-  }
 
 
   v8::Local<v8::Value> openModeValue = GetProperty(options, "openMode");
@@ -299,16 +317,35 @@ NAN_METHOD(processArchive) {
   int op = openMode == 0 ? 0 : 2;
 
 
-  // The callback argument
-  v8::Local<v8::Function> cb = (info.Length() > 1 && info[1]->IsFunction())
-                           ? info[1].As<v8::Function>() 
-                           : Nan::New<v8::FunctionTemplate>(NOOP)->GetFunction();
+  bool isAsync = info.Length() > 1 && info[1]->IsFunction();
 
-  // Wrap v8::Local<v8::Function> into a Nan::Callback
-  Nan::Callback * callback = new Nan::Callback(cb);
+  if (isAsync) {
+    
+    // The callback argument
+    v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
-  // Start the async worker
-  Nan::AsyncQueueWorker(new RarWorker(callback, openMode, op, file, toDir, password));
+    // Wrap v8::Local<v8::Function> into a Nan::Callback
+    Nan::Callback * callback = new Nan::Callback(cb);
+
+    // Start the async worker
+    Nan::AsyncQueueWorker(new RarWorker(callback, openMode, op, file, toDir, password));
+  }
+  else {
+    std::string archiveName;
+    std::vector<std::string> filenames;
+
+    int ret = _processArchive(openMode, op, file, toDir, password, archiveName, filenames);
+
+    if (ret == 0) {
+      info.GetReturnValue().Set(
+        buildResponse(archiveName, filenames)
+      );
+    }
+    else {
+      auto error = buildError(ret);
+      Nan::ThrowError(error);
+    }
+  }
 }
 
 NAN_MODULE_INIT(Initialize) {

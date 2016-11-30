@@ -1,5 +1,6 @@
 import * as Path from 'path';
 import * as Fs from 'fs';
+import { promisify } from './promisify';
 
 const unrar = require('bindings')('node-unrar');
 
@@ -12,6 +13,7 @@ export interface RarOptions {
   openMode?: OpenMode,
   password?: string;
   dest?: string;
+  recursiveResults?: boolean;
 }
 
 export interface RarResult {
@@ -19,24 +21,41 @@ export interface RarResult {
   files: string[];
 }
 
+export interface FileEntry {
+  [key: string]: string|FileEntry[];
+}
+
 export type RarCallback = (err: any, result: RarResult) => void;
 
-function promisify (bind: any, method: any, args: any): Promise<any> {
-
-  return new Promise((resolve, reject) => {
-
-    const callback = (err: any, result: any) => {
-
-      if (err) {
-          return reject(err);
-      }
-
-      return resolve(result);
-    };
-
-    method.apply(bind, args ? args.concat(callback) : [callback]);
-  });
+const defaults: RarOptions = {
+  openMode: 0
 };
+
+function overrideDefaults (...options: any[]) {
+
+  return (<any>Object).assign({}, defaults, ...options);
+}
+
+
+// TODO
+function processFiles (files: string[]) {
+
+  const results: FileEntry[] = []
+
+  // 
+  /*{
+      entries: [
+        file,
+        dir: [ 
+          file,
+          dir: [
+
+          ]
+        ]
+      ]
+  }
+  */
+}
 
 export function processArchive (path: string, options?: RarOptions|RarCallback, cb?: RarCallback): Promise<RarResult>|void {
 
@@ -55,17 +74,14 @@ export function processArchive (path: string, options?: RarOptions|RarCallback, 
     return cb(error, null);
   }
 
-  let opts: any = {
-    openMode: 0,
-    path: realpath
-  };
+  let opts: any = { path: realpath };
 
   if (typeof options === 'object') {
-    // <any>Object to avoid error
-    opts = (<any>Object).assign({}, opts, options);
-    if (opts.dest) {
-      opts.dest = Path.resolve(opts.dest);
-    }
+    opts = overrideDefaults(options, opts);
+  }
+
+  if (opts.dest) {
+    opts.dest = Path.resolve(opts.dest);
   }
 
   unrar.processArchive(opts, cb);
@@ -82,13 +98,8 @@ export function list (path: string,  options?: RarOptions|RarCallback, cb?: RarC
     return promisify(this, processArchive, [path, options]);
   }
 
-  if (typeof options != 'object') {
-    options = {};
-  }
-
-  options.openMode = OpenMode.LIST;
-
-  return processArchive(path, options, cb);
+  const opts = overrideDefaults(options, { openMode: OpenMode.LIST });
+  return processArchive(path, opts, cb);
 };
 
 
@@ -102,11 +113,21 @@ export function extract (path: string, options?: RarOptions|RarCallback, cb?: Ra
     return promisify(this, processArchive, [path, options]);
   }
 
-  if (typeof options != 'object') {
-    options = {};
-  }
+  const opts = overrideDefaults(options, { openMode: OpenMode.EXTRACT });
+  return processArchive(path, opts, cb);
+}
 
-  options.openMode = OpenMode.EXTRACT;
+export function processArchiveSync (path: string, options?: RarOptions): RarResult {
 
-  return processArchive(path, options, cb);
+  const realpath = Path.resolve(path);
+  const opts: any = overrideDefaults(options, { path: realpath });
+  return unrar.processArchive(opts);
+}
+
+export function extractSync (path: string, options?: RarOptions): RarResult {
+  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.EXTRACT }));
+}
+
+export function listSync (path: string, options?: RarOptions): RarResult {
+  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.LIST }));
 }

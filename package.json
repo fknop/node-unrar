@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "install": "node-gyp rebuild",
+    "build": "node-gyp build",
     "tsc": "node_modules/.bin/tsc -p tsconfig.json"
   },
   "keywords": [],
