@@ -5,8 +5,8 @@ import { promisify } from './promisify';
 const unrar = require('bindings')('node-unrar');
 
 export enum OpenMode {
-  LIST = 0,
-  EXTRACT = 1
+  List = 0,
+  Extract = 1
 }
 
 export interface RarOptions {
@@ -98,7 +98,7 @@ export function list (path: string,  options?: RarOptions|RarCallback, cb?: RarC
     return promisify(this, processArchive, [path, options]);
   }
 
-  const opts = overrideDefaults(options, { openMode: OpenMode.LIST });
+  const opts = overrideDefaults(options, { openMode: OpenMode.List });
   return processArchive(path, opts, cb);
 };
 
@@ -113,7 +113,7 @@ export function extract (path: string, options?: RarOptions|RarCallback, cb?: Ra
     return promisify(this, processArchive, [path, options]);
   }
 
-  const opts = overrideDefaults(options, { openMode: OpenMode.EXTRACT });
+  const opts = overrideDefaults(options, { openMode: OpenMode.Extract });
   return processArchive(path, opts, cb);
 }
 
@@ -125,9 +125,9 @@ export function processArchiveSync (path: string, options?: RarOptions): RarResu
 }
 
 export function extractSync (path: string, options?: RarOptions): RarResult {
-  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.EXTRACT }));
+  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.Extract }));
 }
 
 export function listSync (path: string, options?: RarOptions): RarResult {
-  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.LIST }));
+  return processArchiveSync(path, overrideDefaults(options, { openMode: OpenMode.List }));
 }
