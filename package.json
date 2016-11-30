@@ -1,6 +1,6 @@
 {
   "name": "@fknop/node-unrar",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Native NodeJS rar addon",
   "main": "lib/index.js",
   "scripts": {
@@ -10,9 +10,16 @@
     "tsc": "tsc -p tsconfig.json",
     "prepublish": "npm run tsc"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+  	"node",
+    "addon",
+    "rar",
+    "unrar",
+    "fknop",
+    "native"
+  ],
+  "author": "Florian Knop",
+  "license": "MIT",
   "gypfile": true,
   "dependencies": {
     "bindings": "^1.2.1",
