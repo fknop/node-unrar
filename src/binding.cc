@@ -5,7 +5,6 @@
 #include <vector>
 #include <nan.h>
 
-
 #ifdef _DEBUG 
 #define _D(msg) do {\
   std::cout << __FILE__ << ":" << __LINE__ << ">> " << msg << std::endl;\
@@ -20,6 +19,13 @@ static v8::Local<v8::String> NewV8String (const char * value) {
 
 static v8::Local<v8::Value> GetProperty (v8::Local<v8::Object> object, const char * key) {
   return Nan::Get(object, NewV8String(key)).ToLocalChecked();
+}
+
+static bool HasProperty (v8::Local<v8::Object> object, const char * key) {
+  return Nan::Has(
+    object,
+    NewV8String(key)
+  ).FromJust();
 }
 
 static Nan::Maybe<bool> SetProperty (v8::Local<v8::Object> object, const char * key, v8::Local<v8::Value> value) {
@@ -244,13 +250,44 @@ NAN_METHOD(processArchive) {
     return;
   }
 
+  char file[1024];
+  char password[128];
+  char toDir[1024];
+
   v8::Local<v8::Object> options = info[0]->ToObject();
   v8::Local<v8::Value> filepathValue = GetProperty(options, "path");
+  Nan::Utf8String filepath(filepathValue);
+
+  strncpy(file, (const char *) *filepath, 1024);
+
+  if (HasProperty(options, "dest")) {
+    v8::Local<v8::Value> toDirValue = GetProperty(options, "dest");
+    if (!toDirValue->IsString()) {
+      Nan::ThrowTypeError("dest must be a string");
+      return;
+    }
+
+    Nan::Utf8String dest(toDirValue);
+    strncpy(toDir, (const char *) *dest, 1024);
+  }
+
+  if (HasProperty(options, "password")) {
+    v8::Local<v8::Value> passwordValue = GetProperty(options, "password");
+    if (!passwordValue->IsString()) {
+      Nan::ThrowTypeError("password must be a string");
+      return;
+    }
+
+    Nan::Utf8String passwd(passwordValue);
+    strncpy(password, (const char *) *passwd, 128);
+  }
+
 
   if (!filepathValue->IsString()) {
     Nan::ThrowTypeError("path must be a string");
     return;
   }
+
 
   v8::Local<v8::Value> openModeValue = GetProperty(options, "openMode");
   if (!openModeValue->IsNumber()) {
@@ -258,13 +295,9 @@ NAN_METHOD(processArchive) {
     return;
   }
 
-  Nan::Utf8String filepath(filepathValue);
-
   int openMode = openModeValue->Int32Value();
   int op = openMode == 0 ? 0 : 2;
 
-  char file[1024];
-  strncpy(file, (const char *) *filepath, 1024);
 
   // The callback argument
   v8::Local<v8::Function> cb = (info.Length() > 1 && info[1]->IsFunction())
@@ -275,7 +308,7 @@ NAN_METHOD(processArchive) {
   Nan::Callback * callback = new Nan::Callback(cb);
 
   // Start the async worker
-  Nan::AsyncQueueWorker(new RarWorker(callback, openMode, op, file, 0, 0));
+  Nan::AsyncQueueWorker(new RarWorker(callback, openMode, op, file, toDir, password));
 }
 
 NAN_MODULE_INIT(Initialize) {

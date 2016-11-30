@@ -11,6 +11,7 @@ export enum OpenMode {
 export interface RarOptions {
   openMode?: OpenMode,
   password?: string;
+  dest?: string;
 }
 
 export interface RarResult {
@@ -41,7 +42,7 @@ export function processArchive (path: string, options?: RarOptions|RarCallback, 
 
   const realpath = Path.resolve(path);
 
-  if (typeof options === 'function') {
+  if (!cb && typeof options === 'function') {
     cb = options;
   }
 
@@ -62,13 +63,50 @@ export function processArchive (path: string, options?: RarOptions|RarCallback, 
   if (typeof options === 'object') {
     // <any>Object to avoid error
     opts = (<any>Object).assign({}, opts, options);
+    if (opts.dest) {
+      opts.dest = Path.resolve(opts.dest);
+    }
   }
 
   unrar.processArchive(opts, cb);
 }
 
 
-export function list (path: string, cb?: RarCallback) {
+export function list (path: string,  options?: RarOptions|RarCallback, cb?: RarCallback): Promise<RarResult>|void {
 
-  return processArchive(path, cb);
+  if (!cb && typeof options === 'function') {
+    cb = options;
+  }
+
+  if (!cb) {
+    return promisify(this, processArchive, [path, options]);
+  }
+
+  if (typeof options != 'object') {
+    options = {};
+  }
+
+  options.openMode = OpenMode.LIST;
+
+  return processArchive(path, options, cb);
 };
+
+
+export function extract (path: string, options?: RarOptions|RarCallback, cb?: RarCallback): Promise<RarResult>|void {
+
+  if (!cb && typeof options === 'function') {
+    cb = options;
+  }
+
+  if (!cb) {
+    return promisify(this, processArchive, [path, options]);
+  }
+
+  if (typeof options != 'object') {
+    options = {};
+  }
+
+  options.openMode = OpenMode.EXTRACT;
+
+  return processArchive(path, options, cb);
+}
