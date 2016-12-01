@@ -69,16 +69,13 @@ export function processArchive (path: string, options?: RarOptions|RarCallback, 
     return promisify(this, processArchive, [path, options]);
   }
 
+
   if (!Fs.existsSync(realpath)) {
     const error = new Error(`${realpath}: No such file or directory`);
     return cb(error, null);
   }
 
-  let opts: any = { path: realpath };
-
-  if (typeof options === 'object') {
-    opts = overrideDefaults(options, opts);
-  }
+  let opts: any = overrideDefaults(options, { path: realpath });
 
   if (opts.dest) {
     opts.dest = Path.resolve(opts.dest);
