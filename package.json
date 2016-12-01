@@ -1,6 +1,6 @@
 {
   "name": "@fknop/node-unrar",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Native NodeJS rar addon",
   "main": "lib/index.js",
   "files": [
