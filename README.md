@@ -104,3 +104,8 @@ Alias for `processArchiveSync` with `OpenMode.List`.
 ### `extractSync(path: string, options?: RarOptions): RarResult`
 
 Alias for `processArchiveSync` with `OpenMode.Extract`.
+
+## Todo
+
+* `humanResults` option (my priority)
+* Tests
