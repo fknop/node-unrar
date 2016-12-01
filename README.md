@@ -2,12 +2,17 @@
 
 Native NodeJS rar addon. 
 
-This library is inspired by https://github.com/davidcroda/node-rar.
-The library (`davidcroda/node-rar`) has not been updated for latest versions of NodeJS. 
-This repository also works asynchronously.
+This library is inspired by https://github.com/davidcroda/node-rar and the original library.
+I needed a native unrar addon that worked with the new versions of node.
+I also updated the addon to be able to process an archive `asynchronously`.
 
-This is still a work in progress.
+## Install 
 
+```
+npm install @fknop/node-unrar
+```
+
+It's published under the @fknop scope to avoid using a name like `node-unrar2` or something like that.
 
 ## API
 
