@@ -31,7 +31,7 @@ It's published under the @fknop scope to avoid using a name like `node-unrar2` o
 * `openMode`: the archive open mode
 * `dest`: the destination directory for extraction (ignored in list mode).
 * `password`: the archive password 
-* `humanResults`: (not yet implemented) - instead of an array of raw string names, display the files as a tree
+* `humanResults`: instead of an array of raw string names, display the files as a tree
 
 Without `humanResults`:
 
@@ -55,18 +55,18 @@ With `humanResults`:
 ```javascript
 {
   name: 'archive.rar',
-  files: [
-    'dir': [
-      'file1',
-      'file2',
-      'file3',
-      'dir2': [
-        'file4',
-        'file5'
-      ]
-    ],
-    'file'
-  ]
+  files: {
+    'dir': {
+      'file1': {},
+      'file2': {},
+      'file3': {},
+      'dir2': {
+        'file4': {},
+        'file5': {}
+      }
+    },
+    'file': {}
+  }
 }
 ```
 
@@ -107,5 +107,4 @@ Alias for `processArchiveSync` with `OpenMode.Extract`.
 
 ## Todo
 
-* `humanResults` option (my priority)
 * Tests

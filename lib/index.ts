@@ -13,12 +13,16 @@ export interface RarOptions {
   openMode?: OpenMode,
   password?: string;
   dest?: string;
-  recursiveResults?: boolean;
+  humanResults?: boolean;
+}
+
+export interface HRFiles {
+  [key: string]: HRFiles;
 }
 
 export interface RarResult {
   name: string;
-  files: string[];
+  files: string[]|HRFiles;
 }
 
 export interface FileEntry {
@@ -37,24 +41,33 @@ function overrideDefaults (...options: any[]) {
 }
 
 
-// TODO
-function processFiles (files: string[]) {
+function getFilesMap (files: string[]): HRFiles {
 
-  const results: FileEntry[] = []
+  const map: HRFiles = {};
 
-  // 
-  /*{
-      entries: [
-        file,
-        dir: [ 
-          file,
-          dir: [
+  files.forEach((file: string) => {
 
-          ]
-        ]
-      ]
-  }
-  */
+    const split = file.split(Path.sep);
+    let previous: HRFiles = map;
+    let current: string;
+    for (let i = 0; i < split.length; ++i) {
+
+      current = split[i];
+      if (!previous[current]) {
+        previous[current] = {};
+      }
+
+      previous = previous[current];
+    }
+  });
+
+  return map;
+}
+
+
+export function processFiles (files: string[]): HRFiles {
+
+  return getFilesMap(files);
 }
 
 export function processArchive (path: string, options?: RarOptions|RarCallback, cb?: RarCallback): Promise<RarResult>|void {
@@ -81,7 +94,18 @@ export function processArchive (path: string, options?: RarOptions|RarCallback, 
     opts.dest = Path.resolve(opts.dest);
   }
 
-  unrar.processArchive(opts, cb);
+  unrar.processArchive(opts, (err: any, result: RarResult) => {
+    if (err) {
+      cb(err, null);
+    }
+    else {
+      if (opts.humanResults) {
+        result.files = processFiles(<string[]>result.files);
+      }
+
+      cb(null, result);
+    }
+  });
 }
 
 
